@@ -1,0 +1,3 @@
+[submodule "CodePaper"]
+	path = CodePaper
+	url = https://github.com/jdharcourt/CodePaper.git
