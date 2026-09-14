@@ -6,10 +6,10 @@ from random import randint
 previous = []
 
 # Why not
-for i in range(10000): #Iterate 1000 times
+for i in range(100000): #Iterate 1000 times
 
-    a = randint(1, 10000) # Generate randinits a + b
-    b = randint(1, 1000)
+    a = randint(1, 100) # Generate randinits a + b
+    b = randint(1, 100)
     # Cycle through math operators until an answer of 8 is reached, then print the equation 
     
     plus = a + b
