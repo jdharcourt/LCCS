@@ -8,8 +8,5 @@ for i in range(1,31):
         s = str(i)
         multiples.append(s)
 
-
-
-
 for i in multiples:
     print(i)
