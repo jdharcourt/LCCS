@@ -33,11 +33,11 @@
 # 0	H8	0 -29	O8	    0
 
 
-
 level = input("Level - H/O: ").lower()
+points = 0
 
 while level.lower().strip() not in ("h", "o"):
-    choice = input("Please enter only L or H: ").strip().lower()
+    level = input("Please enter only L or H: ").strip().lower()
 
 while True:
     try:
@@ -46,7 +46,35 @@ while True:
     except:
         print('Please enter just the number')
 
+points_table = {
+    "h": {
+        range(90, 101): 100,
+        range(80, 90): 88,
+        range(70, 80): 77,
+        range(60, 70): 66,
+        range(50, 60): 56,
+        range(40, 50): 46,
+        range(30, 40): 37,
+        range(0, 30): 0
+    },
+    "o": {
+        range(90, 101): 56,
+        range(80, 90): 46,
+        range(70, 80): 37,
+        range(60, 70): 28,
+        range(50, 60): 20,
+        range(40, 50): 12,
+        range(30, 40): 0,
+        range(0, 30): 0
+    }
+}
 
+for grade_range, value in points_table[level].items():
+    if grade in grade_range:
+        points = value
+        break
+
+print(f"{grade}% = {points}")
 
 
 
