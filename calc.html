@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Glassmorphism Scientific Calculator</title>
+  <style>
+    :root{
+      --glass-bg: rgba(255,255,255,0.06);
+      --glass-border: rgba(255,255,255,0.12);
+      --accent: rgba(255,255,255,0.9);
+      --muted: rgba(255,255,255,0.72);
+      --primary: #7dd3fc;
+      --secondary: #c4b5fd;
+      --danger: #fb7185;
+      --success: #34d399;
+      --shadow: 0 8px 30px rgba(2,6,23,0.45);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      height:100%;
+      margin:0;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent 8%),
+                  radial-gradient(1000px 500px at 90% 90%, rgba(14,165,233,0.08), transparent 8%),
+                  linear-gradient(180deg,#071029 0%, #0b1220 100%);
+      color:var(--accent);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+    }
+
+    .app {
+      width:min(1100px, 96%);
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap:20px;
+      align-items:start;
+    }
+
+    /* Glass card */
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border-radius:16px;
+      padding:18px;
+      border:1px solid var(--glass-border);
+      backdrop-filter: blur(10px) saturate(120%);
+      -webkit-backdrop-filter: blur(10px) saturate(120%);
+      box-shadow: var(--shadow);
+    }
+
+    /* Calculator column */
+    .calculator {
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .top-row {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+
+    .title {
+      font-weight:700;
+      color:var(--accent);
+      letter-spacing:0.2px;
+      font-size:1.05rem;
+    }
+
+    .controls {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .btn {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:0.9rem;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, rgba(125,211,252,0.14), rgba(196,181,253,0.08));
+      color:var(--accent);
+      border:1px solid rgba(125,211,252,0.18);
+    }
+
+    .display {
+      height:86px;
+      border-radius:12px;
+      padding:14px 16px;
+      font-size:1.8rem;
+      color:var(--accent);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+      text-align:right;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:4px;
+    }
+
+    .display .expr {
+      color:rgba(255,255,255,0.6);
+      font-size:0.95rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .display .result {
+      color:var(--accent);
+      font-weight:700;
+      font-size:1.5rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap:10px;
+    }
+
+    .key {
+      height:56px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:0.95rem;
+      border:1px solid rgba(255,255,255,0.04);
+      cursor:pointer;
+      user-select:none;
+      transition:transform .06s ease, filter .12s ease;
+    }
+
+    .key:hover { transform: translateY(-2px); filter:brightness(1.04) }
+    .key:active { transform: translateY(0) scale(.995) }
+
+    .key.operator { background: linear-gradient(90deg,#a78bfa,#60a5fa); color:#041025; border:1px solid rgba(255,255,255,0.06) }
+    .key.equal { background: linear-gradient(90deg,#34d399,#10b981); color:#02120b; grid-column: span 2; }
+    .key.clear { background: linear-gradient(90deg,#fb7185,#f43f5e); color:#20060a; }
+    .key.secondary { background: rgba(255,255,255,0.02); color:var(--muted) }
+    .key.wide { grid-column: span 2; }
+
+    /* History column */
+    .history {
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      max-height:760px;
+    }
+
+    .history h3{
+      margin:0;
+      color:var(--accent);
+      font-size:1rem;
+      font-weight:700;
+    }
+
+    .history-list{
+      margin:0;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:auto;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+    }
+
+    .hist-item {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px;
+      border-radius:10px;
+      align-items:center;
+      color:var(--muted);
+      font-size:0.95rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    .hist-left { display:flex; flex-direction:column; gap:6px; max-width:70% }
+    .hist-expr { color:rgba(255,255,255,0.75); font-weight:700; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .hist-res { color:var(--primary); font-weight:700; font-size:0.95rem }
+
+    .hist-actions { display:flex; gap:8px; align-items:center }
+    .small-btn {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--muted);
+      padding:6px 8px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:0.85rem;
+    }
+
+    .muted-note { color:rgba(255,255,255,0.45); font-size:0.88rem }
+
+    @media (max-width:940px){
+      .app{ grid-template-columns: 1fr; }
+      .history { order: -1 }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card calculator">
+      <div class="top-row">
+        <div class="title">Glass Scientific Calculator</div>
+        <div class="controls">
+          <button class="btn" id="clearHistory">Clear History</button>
+          <button class="btn primary" id="toggleDeg">Deg</button>
+        </div>
+      </div>
+
+      <div id="display" class="display" aria-live="polite">
+        <div class="expr" id="exprLine">&nbsp;</div>
+        <div class="result" id="resultLine">0</div>
+      </div>
+
+      <div class="grid" id="keys">
+        <!-- Row 1 -->
+        <div class="key clear" data-val="C">C</div>
+        <div class="key secondary" data-val="(">(</div>
+        <div class="key secondary" data-val=")">)</div>
+        <div class="key secondary" data-val="^">xʸ</div>
+        <div class="key operator" data-val="DEL">DEL</div>
+        <div class="key operator" data-val="ANS">Ans</div>
+
+        <!-- Row 2 -->
+        <div class="key secondary" data-val="sin(">sin</div>
+        <div class="key secondary" data-val="cos(">cos</div>
+        <div class="key secondary" data-val="tan(">tan</div>
+        <div class="key secondary" data-val="sqrt(">√</div>
+        <div class="key operator" data-val="/">÷</div>
+        <div class="key operator" data-val="%" title="percent">%</div>
+
+        <!-- Row 3 -->
+        <div class="key secondary" data-val="log(">log</div>
+        <div class="key secondary" data-val="ln(">ln</div>
+        <div class="key secondary" data-val="PI">π</div>
+        <div class="key secondary" data-val="E">e</div>
+        <div class="key operator" data-val="*">×</div>
+        <div class="key secondary" data-val="( )" style="visibility:hidden"></div>
+
+        <!-- Row 4 -->
+        <div class="key" data-val="7">7</div>
+        <div class="key" data-val="8">8</div>
+        <div class="key" data-val="9">9</div>
+        <div class="key secondary" data-val="**2">x²</div>
+        <div class="key operator" data-val="-">−</div>
+        <div class="key secondary" data-val="10**(" title="10^x">10ˣ</div>
+
+        <!-- Row 5 -->
+        <div class="key" data-val="4">4</div>
+        <div class="key" data-val="5">5</div>
+        <div class="key" data-val="6">6</div>
+        <div class="key secondary" data-val="."">.</div>
+        <div class="key operator" data-val="+">+</div>
+        <div class="key equal" data-val="=">=</div>
+
+        <!-- Row 6 -->
+        <div class="key wide" data-val="0">0</div>
+        <div class="key" data-val=".">.</div>
+        <div class="key secondary" data-val="Ans">Ans</div>
+        <div class="key" data-val="=" style="visibility:hidden"></div>
+        <div class="key" data-val="=" style="visibility:hidden"></div>
+      </div>
+
+      <div class="muted-note">Tip: use keyboard numbers/operators, Enter to evaluate, Backspace to delete.</div>
+    </div>
+
+    <aside class="card history">
+      <h3>History</h3>
+      <div class="history-list" id="historyList" aria-live="polite"></div>
+      <div class="muted-note">History is saved locally in your browser (localStorage).</div>
+    </aside>
+  </div>
+
+  <script>
+    // Elements
+    const exprEl = document.getElementById('exprLine');
+    const resultEl = document.getElementById('resultLine');
+    const keys = document.getElementById('keys');
+    const historyList = document.getElementById('historyList');
+    const toggleDegBtn = document.getElementById('toggleDeg');
+    const clearHistoryBtn = document.getElementById('clearHistory');
+
+    // State
+    let expr = '';
+    let lastAns = '0';
+    let isDeg = true;
+    let history = JSON.parse(localStorage.getItem('glassCalcHistory') || '[]');
+
+    const MAX_HISTORY = 50;
+
+    function render() {
+      exprEl.textContent = expr || '\u00A0';
+      resultEl.textContent = expr ? previewEvaluate(expr) : '0';
+      renderHistory();
+      toggleDegBtn.textContent = isDeg ? 'Deg' : 'Rad';
+    }
+
+    // Key handling
+    keys.addEventListener('click', (e) => {
+      const target = e.target.closest('.key');
+      if (!target) return;
+      const v = target.dataset.val;
+      handleInput(v);
+    });
+
+    function handleInput(v) {
+      if (v === 'C') {
+        expr = '';
+      } else if (v === 'DEL') {
+        expr = expr.slice(0, -1);
+      } else if (v === '=') {
+        evaluate();
+      } else if (v === 'Ans') {
+        expr += lastAns;
+      } else {
+        // special handling: '^' -> '**(' to allow easy exponent input
+        if (v === '^') {
+          expr += '**(';
+        } else {
+          expr += v;
+        }
+      }
+      render();
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (ev) => {
+      const k = ev.key;
+      if ((k >= '0' && k <= '9') || '+-*/().%'.includes(k)) {
+        ev.preventDefault();
+        expr += k;
+        render();
+        return;
+      }
+      if (k === 'Enter') { ev.preventDefault(); evaluate(); return; }
+      if (k === 'Backspace') { ev.preventDefault(); expr = expr.slice(0, -1); render(); return; }
+      if (k === 'Escape') { ev.preventDefault(); expr = ''; render(); return; }
+      // allow Shift+6 (^) etc
+      if (k === '^') { ev.preventDefault(); expr += '**('; render(); return; }
+    });
+
+    // Evaluation helpers
+    function transformExpression(input) {
+      // Normalize common visual characters to JS-friendly ones
+      let s = String(input)
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        // percent -> divide by 100
+        .replace(/%/g, '/100')
+        // convert any stray double-dots
+        .replace(/\u221A/g, 'sqrt') // √ char
+        .replace(/π/g, 'PI')
+        // ensure ^ not used (we convert '^' to '**(' earlier on input), but just in case:
+        .replace(/\^/g, '**');
+
+      return s;
+    }
+
+    function evaluate() {
+      const raw = expr.trim();
+      if (!raw) return;
+
+      try {
+        const code = transformExpression(raw);
+
+        // Build wrapper with math helpers and degree mode
+        const wrapper = `
+          const DEG=${isDeg};
+          const PI=Math.PI, E=Math.E;
+          const sin = (x) => DEG ? Math.sin(x * Math.PI/180) : Math.sin(x);
+          const cos = (x) => DEG ? Math.cos(x * Math.PI/180) : Math.cos(x);
+          const tan = (x) => DEG ? Math.tan(x * Math.PI/180) : Math.tan(x);
+          const ln = Math.log;
+          const log = (x) => Math.log10(x);
+          const sqrt = Math.sqrt;
+          const pow = Math.pow;
+          return (${code});
+        `;
+
+        const value = new Function(wrapper)();
+
+        if (!Number.isFinite(value) || Number.isNaN(value)) throw new Error('Invalid');
+
+        const cleaned = formatResult(value);
+        lastAns = cleaned;
+        // Save history
+        history.push({ expression: raw, result: cleaned, time: Date.now() });
+        if (history.length > MAX_HISTORY) history.shift();
+        localStorage.setItem('glassCalcHistory', JSON.stringify(history));
+        expr = String(cleaned);
+        render();
+      } catch (err) {
+        resultEl.textContent = 'Error';
+      }
+    }
+
+    function previewEvaluate(input) {
+      try {
+        const code = transformExpression(input);
+        const wrapper = `
+          const DEG=${isDeg};
+          const PI=Math.PI, E=Math.E;
+          const sin = (x) => DEG ? Math.sin(x * Math.PI/180) : Math.sin(x);
+          const cos = (x) => DEG ? Math.cos(x * Math.PI/180) : Math.cos(x);
+          const tan = (x) => DEG ? Math.tan(x * Math.PI/180) : Math.tan(x);
+          const ln = Math.log;
+          const log = (x) => Math.log10(x);
+          const sqrt = Math.sqrt;
+          const pow = Math.pow;
+          return (${code});
+        `;
+        const v = new Function(wrapper)();
+        return Number.isFinite(v) ? formatResult(v) : '';
+      } catch {
+        return '';
+      }
+    }
+
+    function formatResult(n) {
+      // Trim to sensible precision but avoid scientific in most cases
+      if (!Number.isFinite(n)) return 'Error';
+      const abs = Math.abs(n);
+      if ((abs !== 0 && (abs < 1e-8 || abs > 1e12))) {
+        return n.toExponential(8);
+      }
+      // Round to 10 decimal places max, then trim trailing zeros
+      const s = Number(Math.round((n + Number.EPSILON) * 1e10) / 1e10).toString();
+      return s;
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+      if (!history.length) {
+        const empty = document.createElement('div');
+        empty.className = 'muted-note';
+        empty.textContent = 'No history yet — your calculations will appear here.';
+        historyList.appendChild(empty);
+        return;
+      }
+      // show most recent first
+      [...history].reverse().forEach((h, idx) => {
+        const item = document.createElement('div');
+        item.className = 'hist-item';
+
+        const left = document.createElement('div');
+        left.className = 'hist-left';
+
+        const ex = document.createElement('div');
+        ex.className = 'hist-expr';
+        ex.textContent = h.expression;
+
+        const re = document.createElement('div');
+        re.className = 'hist-res';
+        re.textContent = h.result;
+
+        left.appendChild(ex);
+        left.appendChild(re);
+
+        const actions = document.createElement('div');
+        actions.className = 'hist-actions';
+
+        const useBtn = document.createElement('button');
+        useBtn.className = 'small-btn';
+        useBtn.textContent = 'Use';
+        useBtn.onclick = () => { expr = h.expression; render(); };
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'small-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(h.result);
+            copyBtn.textContent = 'Copied';
+            setTimeout(()=>copyBtn.textContent='Copy',900);
+          } catch { /* ignore */ }
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'small-btn';
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = () => {
+          // delete the corresponding history element from original array
+          const origIndex = history.length - 1 - idx;
+          history.splice(origIndex,1);
+          localStorage.setItem('glassCalcHistory', JSON.stringify(history));
+          renderHistory();
+        };
+
+        actions.appendChild(useBtn);
+        actions.appendChild(copyBtn);
+        actions.appendChild(delBtn);
+
+        item.appendChild(left);
+        item.appendChild(actions);
+        historyList.appendChild(item);
+      });
+    }
+
+    // Toggle deg/rad
+    toggleDegBtn.addEventListener('click', () => {
+      isDeg = !isDeg;
+      render();
+    });
+
+    // Clear history
+    clearHistoryBtn.addEventListener('click', () => {
+      if (!confirm('Clear all history?')) return;
+      history = [];
+      localStorage.removeItem('glassCalcHistory');
+      renderHistory();
+    });
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
